@@ -48,7 +48,7 @@ The Private Access Tokens (PAT) API allows first parties to drive token issuance
 When an origin.example context wants to provide tokens to a user (i.e. when the user is trusted), they can use a new Fetch API with the privateToken parameter:
 
 ```
-fetch('<issuer>/.well-known/private-token', {
+fetch('<issuer>/private-token', {
   privateToken: {
     type: <token type>,
     issuer: <issuer>,
@@ -61,7 +61,7 @@ fetch('<issuer>/.well-known/private-token', {
 If the client has additional origin information they want to bind in the token, they can use the Fetch API with the following amended privateToken parameter:
 
 ```
-fetch('<issuer>/.well-known/private-token-issue', {
+fetch('<issuer>/private-token-issue', {
   privateToken: {
     type: <token type>,
     issuer: <issuer>,
@@ -101,7 +101,7 @@ document.hasPrivateToken(
 This returns whether there are any valid tokens for a particular context so that the publisher can decide whether to attempt a token redemption.
 
 ```
-fetch('<issuer>/.well-known/trust-token-redeem', {
+fetch('<issuer>/trust-token-redeem', {
   privateTokenContext: {
     redemption-context: <redemption context>,
     origin-info: <origin info>,
@@ -169,35 +169,80 @@ Token issuance could be expanded to other entities (the operating system, or nat
 ### Same-Origin API Usage Example
 
 ```
-coolwebsite.example - Original Top-Level Site
+coolwebsite.example - Original top-level site
 ```
 
 1.  User visits `coolwebsite.example`.
-1.  `coolwebsite.example` verifies the user is a human, and calls `fetch('coolwebsite.example/.well-known/trust-token-issue', {privateToken: {...}})` with no origin info. The browser stores the trust tokens associated with `coolwebsite.example`.
+1.  `coolwebsite.example` verifies the user is a human, and calls `fetch('coolwebsite.example/trust-token-issue', {privateToken: {...}})` with no origin info. The browser stores the trust tokens associated with `coolwebsite.example`.
 1.  Sometime later, the user goes back to `coolwebsite.example`.
-1.  `coolwebsite.example` wants to know if the user has previously been authorized by calling `fetch('coolwebsite.example/.well-known/trust-token-redeem', {privateToken: {...}})` with no origin info. If a token exists, the browser uses it, otherwise the promise returned fails.
+1.  `coolwebsite.example` wants to know if the user has previously been authorized by calling `fetch('coolwebsite.example/trust-token-redeem', {privateToken: {...}})` with no origin info. If a token exists, the browser uses it, otherwise the promise returned fails.
 
 ### Cross-Origin API Usage Example
 
 ```
-original.example - Original origin that issues tokens
-publisher.example - Future origin that redeems tokens
+original.example - Original top-level site that issues tokens
+publisher.example - Future top-level site that redeems tokens
 ```
 
 1.  User visits `original.example`.
-1.  `original.example` verifies the user is a human, and calls `fetch('original.example/.well-known/trust-token-issue', {privateToken: {...}})` with origin info consisting of "original.example,publisher.example". The browser stores the trust tokens associated with this shared context.
+1.  `original.example` verifies the user is a human, and calls `fetch('original.example/trust-token-issue', {privateToken: {...}})` with origin info consisting of "original.example,publisher.example". The browser stores the trust tokens associated with this shared context.
 1.  Sometime later, the user goes to `publisher.example`.
-1.  `publisher.example` wants to know if the user has previously been authorized by original.example by calling `fetch('publisher.example/.well-known/trust-token-redeem', {privateToken: {...}})` with origin info equal to "original.example,publisher.example". If a token exists, the browser uses it, otherwise the promise returned fails.
+1.  `publisher.example` wants to know if the user has previously been authorized by original.example by calling `fetch('publisher.example/trust-token-redeem', {privateToken: {...}})` with origin info equal to "original.example,publisher.example". If a token exists, the browser uses it, otherwise the promise returned fails.
 
 ### Embedded iframe Cross-Origin API Usage Example
 
 ```
 areyouhuman.example - Embedded origin that verifies humanity
-original.example - Original origin that issues tokens and embeds areyouhuman.example
-publisher.example - Future origin that redeems tokens and embeds areyouhuman.example
+original.example - Original top-level site that issues tokens and embeds areyouhuman.example
+publisher.example - Future top-level site that redeems tokens and embeds areyouhuman.example
 ```
 
 1.  User visits `original.example`, which loads `areyouhuman.example`.
-1.  `areyouhuman.example` verifies the user is a human, and calls `fetch('areyouhuman.example/.well-known/trust-token-issue', {privateToken: {...}})` with origin info consisting of "original.example,areyouhuman.example,publisher.example". The browser stores the trust tokens associated with this shared context.
+1.  `areyouhuman.example` verifies the user is a human, and calls `fetch('areyouhuman.example/trust-token-issue', {privateToken: {...}})` with origin info consisting of "original.example,areyouhuman.example,publisher.example". The browser stores the trust tokens associated with this shared context.
 1.  Sometime later, the user goes to `publisher.example`, which loads `areyouhuman.example`.
-1.  `publisher.example` wants to know if the user has previously been authorized by areyouhuman.example by calling `fetch('publisher.example/.well-known/trust-token-redeem', {privateToken: {...}})` with origin info equal to "original.example,areyouhuman.example,publisher.example". If a token exists, the browser uses it, otherwise the promise returned fails.
+1.  `publisher.example` wants to know if the user has previously been authorized by areyouhuman.example by calling `fetch('publisher.example/trust-token-redeem', {privateToken: {...}})` with origin info equal to "original.example,areyouhuman.example,publisher.example". If a token exists, the browser uses it, otherwise the promise returned fails.
+
+### Complete Example
+
+```
+// First party page origin.example
+<html>
+<head>
+<script src="https://humanchecker.example/scripts/humanChecker.js"></script>
+</head>
+<body>
+<button onclick="checkHumanity()">amihuman?</button>
+</body>
+</html>
+
+// Embedded Javascript (humanChecker.js) from humanchecker.example
+function checkHumanity() {
+	let tokenType = ...; // type of token requested
+	let tokenKey = ...; // public key of issuer
+	let redemptionContext = ...; // token redemption context
+  let tokenContext = {
+    // origin-info is not specified, so it defaults to the origin for this script (humanchecker.example)
+		"redemption-context": redemptionContext,
+  };
+
+	if (document.hasPrivateToken(privateTokenContext: tokenContext) {
+    // If there is a token, redeem it.
+		fetch('https://issuer.example/trust-token-redeem', { // Browser needs to send this to the Attester, not to the issuer or the origin.
+		 	method: 'POST',
+		 	privateToken: {
+		 		"privateTokenContext": tokenContext,
+		 	}
+		 }).then((response) => /* do something with response */)
+	 } else {
+    // Otherwise, issue a token
+    fetch('https://issuer.example/trust-token-issue', { // Browser needs to send this to the Attester, not to the issuer or the origin.
+      method: 'POST',
+      privateToken: {
+        "tokenType": tokenType,
+        "tokenKey": tokenKey,
+        "privateTokenContext": tokenContext,
+      }
+    }).then((response) => /* do something with response */)
+	}
+}
+```
