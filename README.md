@@ -211,23 +211,23 @@ In this example, there is a top-level origin `origin.example` that embeds a Java
 
 // Embedded Javascript (humanChecker.js) from humanchecker.example
 function checkHumanity() {
-	let tokenType = ...; // type of token requested
-	let tokenKey = ...; // public key of issuer
-	let redemptionContext = ...; // token redemption context
+  let tokenType = ...; // type of token requested
+  let tokenKey = ...; // public key of issuer
+  let redemptionContext = ...; // token redemption context
   let tokenContext = {
     // origin-info is not specified, so it defaults to the origin for this script (humanchecker.example)
-		"redemption-context": redemptionContext,
+    "redemption-context": redemptionContext,
   };
 
-	if (document.hasPrivateToken(privateTokenContext: tokenContext) {
+  if (document.hasPrivateToken(privateTokenContext: tokenContext) {
     // If there is a token, redeem it.
-		fetch('https://humanchecker.example/trust-token-redeem', { // Browser needs to send this to the Attester, not to the issuer or the origin.
-		 	method: 'POST',
-		 	privateToken: {
-		 		"privateTokenContext": tokenContext,
-		 	}
-		 }).then((response) => /* do something with response */)
-	 } else {
+    fetch('https://humanchecker.example/trust-token-redeem', { // Browser needs to send this to the Attester, not to the issuer or the origin.
+      method: 'POST',
+      privateToken: {
+        "privateTokenContext": tokenContext,
+      }
+    }).then((response) => /* do something with response */)
+  } else {
     // Otherwise, issue a token.
     fetch('https://issuer.example/trust-token-issue', { // Browser needs to send this to the Attester, not to the issuer or the origin.
       method: 'POST',
@@ -237,6 +237,6 @@ function checkHumanity() {
         "privateTokenContext": tokenContext,
       }
     }).then((response) => /* do something with response */)
-	}
+  }
 }
 ```
