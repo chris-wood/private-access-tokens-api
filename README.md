@@ -204,6 +204,8 @@ publisher.example - Future top-level site that redeems tokens and embeds areyouh
 
 ### Complete Example
 
+In this example, there is a top-level origin `origin.example` that embeds a Javascript page that handles "humanity checking." This script will attempt to redeem a token if available for the given context -- for the origin `humanchecker.example` -- otherwise it will attempt to issue and store a token for future use.
+
 ```
 // First party page origin.example
 <html>
@@ -227,14 +229,14 @@ function checkHumanity() {
 
 	if (document.hasPrivateToken(privateTokenContext: tokenContext) {
     // If there is a token, redeem it.
-		fetch('https://issuer.example/trust-token-redeem', { // Browser needs to send this to the Attester, not to the issuer or the origin.
+		fetch('https://humanchecker.example/trust-token-redeem', { // Browser needs to send this to the Attester, not to the issuer or the origin.
 		 	method: 'POST',
 		 	privateToken: {
 		 		"privateTokenContext": tokenContext,
 		 	}
 		 }).then((response) => /* do something with response */)
 	 } else {
-    // Otherwise, issue a token
+    // Otherwise, issue a token.
     fetch('https://issuer.example/trust-token-issue', { // Browser needs to send this to the Attester, not to the issuer or the origin.
       method: 'POST',
       privateToken: {
